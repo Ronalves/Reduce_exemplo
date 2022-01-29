@@ -1,0 +1,42 @@
+REPORT zteste2.
+TYPES: BEGIN OF y_komv,
+         knumv TYPE komv-knumv,
+         kposn TYPE komv-kposn,
+         kschl TYPE komv-kschl,
+         kwert TYPE komv-kwert,
+       END OF y_komv,
+
+       yt_komv TYPE SORTED TABLE OF y_komv
+                WITH NON-UNIQUE KEY knumv kposn kschl
+                WITH NON-UNIQUE SORTED KEY key_kposn COMPONENTS kposn kschl,
+
+       BEGIN OF yt_soma,
+         kposn TYPE komv-kposn,
+         total TYPE i,
+       END OF yt_soma.
+
+DATA: it_komv TYPE yt_komv,
+      it_soma TYPE TABLE OF yt_soma.
+
+it_komv =
+      VALUE #(
+        ( knumv = '0000000001' kposn = '10'	kschl = 'RA01' kwert = '10.00'  )
+        ( knumv = '0000000001' kposn = '10'	kschl = 'PBXX' kwert = '350.00' )
+        ( knumv = '0000000001' kposn = '20'	kschl = 'RA01' kwert = '2.00'   )
+        ( knumv = '0000000001' kposn = '20'	kschl = 'RA01' kwert = '3.50'   )
+        ( knumv = '0000000001' kposn = '20'	kschl = 'PBXX' kwert = '400.00' )
+        ( knumv = '0000000001' kposn = '10'	kschl = 'RA01' kwert = '5.00'   )
+        ( knumv = '0000000001' kposn = '10'	kschl = 'PBXX' kwert = '200.00' )
+              ).
+
+DATA(it_komvaux) = it_komv[].
+DELETE ADJACENT DUPLICATES FROM it_komvaux COMPARING kposn.
+LOOP AT it_komvaux INTO DATA(ls_komvaux).
+
+  APPEND VALUE #( kposn = ls_komvaux-kposn
+                  total = REDUCE i( INIT a = 0 FOR ls IN it_komv WHERE ( kposn = ls_komvaux-kposn ) NEXT a = a + 1 )
+                  ) TO it_soma.
+
+ENDLOOP.
+
+CLEAR it_soma[].
